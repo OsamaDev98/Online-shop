@@ -46,7 +46,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     select: { color: true },
     where: { categoryId: category.id, color: { not: null }, isActive: true }
   });
-  const colors = Array.from(new Set(rawProductsColors.map(p => p.color).filter(Boolean))) as string[];
+  const colors = Array.from(new Set(rawProductsColors.map((p: typeof rawProductsColors[number]) => p.color).filter(Boolean))) as string[];
 
   // 3. بناء الفلاتر
   const whereClause: any = {

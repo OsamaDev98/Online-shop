@@ -42,7 +42,7 @@ export default async function ShopPage({ searchParams }: PageProps) {
     where: { color: { not: null }, isActive: true },
   });
   const colors = Array.from(
-    new Set(rawProductsColors.map((p) => p.color).filter(Boolean))
+    new Set(rawProductsColors.map((p: typeof rawProductsColors[number]) => p.color).filter(Boolean))
   ) as string[];
 
   const rawAluminumTypes = await prisma.product.findMany({
@@ -50,7 +50,7 @@ export default async function ShopPage({ searchParams }: PageProps) {
     where: { aluminumType: { not: null }, isActive: true },
   });
   const aluminumTypes = Array.from(
-    new Set(rawAluminumTypes.map((p) => p.aluminumType).filter(Boolean))
+    new Set(rawAluminumTypes.map((p: typeof rawAluminumTypes[number]) => p.aluminumType).filter(Boolean))
   ) as string[];
 
   const whereClause: any = { isActive: true };
