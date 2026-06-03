@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <!-- Metallic Gold Gradient -->
+    <linearGradient id="gold-grad-fav" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b88a12" />
+      <stop offset="30%" stop-color="#f5d98a" />
+      <stop offset="70%" stop-color="#d4a017" />
+      <stop offset="100%" stop-color="#f0c84a" />
+    </linearGradient>
+    <linearGradient id="navy-grad-fav" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f1a3e" />
+      <stop offset="100%" stop-color="#1e2d6e" />
+    </linearGradient>
+  </defs>
+  <!-- Circular background for clean favicon browser rendering -->
+  <circle cx="50" cy="50" r="46" fill="url(#navy-grad-fav)" stroke="url(#gold-grad-fav)" stroke-width="3" />
+  <!-- A compact version of the structural A -->
+  <path d="M30 66 L50 26 L70 66 M36 52 L64 52" stroke="url(#gold-grad-fav)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <path d="M43 42 L50 28 L57 42" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.8" />
+  <circle cx="50" cy="60" r="4.5" fill="url(#gold-grad-fav)" />
+</svg>

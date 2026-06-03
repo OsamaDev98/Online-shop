@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  orderIndex  Int       @default(0) // للتحكم بترتيب ظهور الأقسام في المتجر
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id              String      @id @default(uuid())
+  name            String
+  slug            String      @unique // رابط المنتج الفريد للـ SEO
+  description     String
+  price           Float       // السعر الأصلي
+  discountPrice   Float?      // سعر الخصم (اختياري)
+  sku             String?     // رمز تتبع المخزون الفريد
+  brand           String?     // العلامة التجارية
+  images          String      // روابط الصور مفصولة بفاصلة لـ SQLite
+  stock           Int         @default(0)
+  color           String?     // الألوان (فضي، أسود مطفي، ذهبي، إلخ)
+  aluminumType    String?     // نوع الألومنيوم المستخدم (مثال: محلي فاخر، إيطالي مستورد)
+  dimensions      String?     // الأبعاد والمقاسات
+  weight          Float?      // الوزن بالكيلوجرام
+  isActive        Boolean     @default(true) // حالة نشاط المنتج وعرضه في المتجر
+  metaTitle       String?     // عنوان السيو للمنتج
+  metaDescription String?     // وصف السيو للمنتج
+  categoryId      String
+  category        Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems      OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  shippingAddress String
+  province        String?     // المحافظة المصرية للشحن ديناميكياً
+  city            String?     // المدينة أو المركز
+  notes           String?     // ملاحظات إضافية من العميل
+  totalAmount     Float       // الإجمالي النهائي المدفوع فعلياً
+  shippingFee     Float       @default(0) // تكلفة الشحن المطبقة
+  discountAmount  Float       @default(0) // قيمة الخصم المطبق بالكوبون
+  couponCode      String?     // الكوبون المستخدم في الطلب
+  status          String      @default("NEW") // حالات الطلب الفنية: NEW (جديد), UNDER_REVIEW (قيد المراجعة), PREPARING (قيد التجهيز), SHIPPED (تم الشحن), DELIVERED (تم التسليم), CANCELLED (ملغي)
+  paymentStatus   String      @default("PENDING") // PENDING (انتظار الدفع), PAID (تم الدفع), FAILED (فشل الدفع), REFUNDED (تم الاسترجاع)
+  shippingStatus  String      @default("PREPARING") // PREPARING (تجهيز الشحنة), IN_TRANSIT (جاري النقل), DELIVERED (تم التسليم للباب)
+  paymentId       String?     // معرف عملية الدفع من Paymob
+  paymobOrderId   String?     // معرف الطلب المولد من Paymob
+  userId          String?     // معرف العميل المسجل
+  user            User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  items           OrderItem[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String
+  password  String   // كلمة المرور المشفرة بـ bcryptjs
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int
+  price     Float
+}
+
+model AdminUser {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String   // كلمة المرور المشفرة
+  createdAt DateTime @default(now())
+}
+
+model Coupon {
+  id             String    @id @default(uuid())
+  code           String    @unique // كود الخصم (مثل: EGY20)
+  discountType   String    // PERCENTAGE (نسبة مئوية) أو FIXED (مبلغ ثابت)
+  discountValue  Float     // قيمة الخصم المطبق
+  minOrderAmount Float     @default(0) // الحد الأدنى للطلب لتفعيل الكوبون
+  isActive       Boolean   @default(true) // حالة نشاط الكوبون
+  expiryDate     DateTime? // تاريخ انتهاء الصلاحية
+  createdAt      DateTime  @default(now())
+}
+
+model ShippingSetting {
+  id           String   @id @default(uuid())
+  province     String   @unique // اسم المحافظة المصرية (مثل: القاهرة)
+  cost         Float    // تكلفة الشحن بالجنيه
+  deliveryDays String?  // عدد أيام التوصيل المتوقعة (مثل: "2-3 أيام")
+  isActive     Boolean  @default(true)
+}
+
+model HomepageContent {
+  id           String   @id @default(uuid())
+  heroTitle    String   // عنوان البانر الترحيبي
+  heroSubtitle String   // الوصف الفرعي
+  heroImage    String   // رابط الصورة الخلفية الفخمة للبانر
+  ctaText      String   // نص زر الانتقال السريع
+  ctaLink      String   // رابط زر الانتقال السريع
+  updatedAt    DateTime @updatedAt
+}
+
+model SiteSetting {
+  id              String   @id @default(uuid())
+  siteName        String   // اسم المتجر الإلكتروني
+  logo            String?  // رابط الشعار الفاخر للمتجر
+  contactPhone    String   // هاتف الدعم الرئيسي بالمتجر
+  contactEmail    String   // بريد الدعم الرئيسي
+  whatsappNumber  String   // رقم الواتساب للتواصل التفاعلي والسريع
+  facebookLink    String?  // رابط صفحة الفيسبوك
+  metaTitle       String   // عنوان الـ SEO الافتراضي للموقع كاملاً
+  metaDescription String   // وصف الـ SEO الافتراضي للموقع كاملاً
+  updatedAt       DateTime @updatedAt
+}
