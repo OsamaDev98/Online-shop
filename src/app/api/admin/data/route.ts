@@ -64,8 +64,8 @@ export async function GET(request: Request) {
     const totalOrders = orders.length;
     
     // المبيعات المكتملة الفعالة (التي تم دفع قيمتها بنجاح في النظام)
-    const paidOrders = orders.filter(o => o.paymentStatus === "PAID");
-    const totalRevenue = paidOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+    const paidOrders = orders.filter((o: typeof orders[number]) => o.paymentStatus === "PAID");
+    const totalRevenue = paidOrders.reduce((sum: number, o: typeof orders[number]) => sum + o.totalAmount, 0);
     
     // المنتجات المنتهية من المخزن
     const outOfStockCount = products.filter(p => p.stock <= 0).length;
