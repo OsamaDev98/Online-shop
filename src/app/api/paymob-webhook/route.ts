@@ -93,7 +93,7 @@ export async function POST(request: Request) {
             paymentId: String(transaction.id) // حفظ معرف العملية المالية
           }
         });
-        console.log(`Order ${order.id} updated to PAID via Paymob Webhook`);
+        console.info(`[Paymob] Order ${order.id} marked as PAID (transactionId: ${transaction.id})`);
       } else {
         console.warn(`No order found with paymobOrderId: ${paymobOrderId}`);
       }
