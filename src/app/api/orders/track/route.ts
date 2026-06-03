@@ -54,7 +54,7 @@ export async function GET(request: Request) {
       paymentStatus: order.paymentStatus,
       shippingStatus: order.shippingStatus,
       createdAt: order.createdAt,
-      items: order.items.map(item => ({
+      items: order.items.map((item: typeof order.items[number]) => ({
         id: item.id,
         productId: item.productId,
         productName: item.product.name,
