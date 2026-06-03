@@ -68,7 +68,7 @@ export async function GET(request: Request) {
     const totalRevenue = paidOrders.reduce((sum: number, o: typeof orders[number]) => sum + o.totalAmount, 0);
     
     // المنتجات المنتهية من المخزن
-    const outOfStockCount = products.filter(p => p.stock <= 0).length;
+    const outOfStockCount = products.filter((p: typeof products[number]) => p.stock <= 0).length;
 
     // العملاء المسجلين
     const totalCustomers = users.length;
