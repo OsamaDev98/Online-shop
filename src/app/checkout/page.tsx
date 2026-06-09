@@ -162,25 +162,25 @@ export default function CheckoutPage() {
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">الاسم بالكامل *</label>
                     <input type="text" name="name" required value={formData.name} onChange={handleInputChange}
-                      placeholder="محمود أحمد علي" className="shadcn-input" />
+                      placeholder="محمود أحمد علي" className="shadcn-input mt-2" />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">رقم الهاتف *</label>
                     <input type="tel" name="phone" required value={formData.phone} onChange={handleInputChange}
-                      placeholder="01XXXXXXXXX" className="shadcn-input text-left font-mono" dir="ltr" />
+                      placeholder="01XXXXXXXXX" className="shadcn-input text-left font-mono mt-2" dir="ltr" />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">البريد الإلكتروني *</label>
                   <input type="email" name="email" required value={formData.email} onChange={handleInputChange}
-                    placeholder="name@example.com" className="shadcn-input text-left" dir="ltr" />
+                    placeholder="name@example.com" className="shadcn-input text-left mt-2" dir="ltr" />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">المحافظة *</label>
-                    <select name="province" required value={formData.province} onChange={handleInputChange} className="shadcn-select w-full">
+                    <select name="province" required value={formData.province} onChange={handleInputChange} className="shadcn-select w-full mt-2">
                       <option value="">اختر المحافظة</option>
                       {provinces.map((p) => (
                         <option key={p.id} value={p.province}>{p.province} ({p.cost} ج.م)</option>
@@ -190,20 +190,20 @@ export default function CheckoutPage() {
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">المدينة / المركز *</label>
                     <input type="text" name="city" required value={formData.city} onChange={handleInputChange}
-                      placeholder="مثال: الدقي، طنطا" className="shadcn-input" />
+                      placeholder="مثال: الدقي، طنطا" className="shadcn-input mt-2" />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">العنوان بالتفصيل *</label>
                   <textarea name="address" required rows={2} value={formData.address} onChange={handleInputChange}
-                    placeholder="رقم الشقة، الدور، العمارة، اسم الشارع" className="shadcn-input" />
+                    placeholder="رقم الشقة، الدور، العمارة، اسم الشارع" className="shadcn-input mt-2" />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">ملاحظات إضافية (اختياري)</label>
                   <textarea name="notes" rows={2} value={formData.notes} onChange={handleInputChange}
-                    placeholder="أي تعليمات خاصة بالمندوب" className="shadcn-input" />
+                    placeholder="أي تعليمات خاصة بالمندوب" className="shadcn-input mt-2" />
                 </div>
               </div>
 

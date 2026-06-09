@@ -17,8 +17,9 @@ export default function CartPage() {
   };
 
   const activeShipping = shippingFees[selectedGovernorate] || { name: "", fee: 50 };
-  const vatAmount = cartTotal * 0.14;
-  const finalTotal = cartTotal + activeShipping.fee + vatAmount;
+  // الأسعار تشمل ضريبة القيمة المضافة 14% مضمنة
+  const vatAmount = cartTotal - (cartTotal / 1.14);
+  const finalTotal = cartTotal + activeShipping.fee;
 
   return (
     <div className="min-h-screen bg-slate-50" dir="rtl">
@@ -172,8 +173,8 @@ export default function CartPage() {
                     <span className="font-extrabold text-[#0f1a3e]">{activeShipping.fee.toLocaleString("ar-EG")} ج.م</span>
                   </div>
                   <div className="flex justify-between text-slate-600 font-semibold">
-                    <span>ضريبة القيمة المضافة (14%):</span>
-                    <span className="font-extrabold text-[#0f1a3e]">{vatAmount.toLocaleString("ar-EG", { maximumFractionDigits: 2 })} ج.م</span>
+                    <span>ضريبة القيمة المضافة (14% مضمنة):</span>
+                    <span className="font-extrabold text-slate-500">{vatAmount.toLocaleString("ar-EG", { maximumFractionDigits: 2 })} ج.م</span>
                   </div>
                   <div className="flex justify-between pt-4 border-t-2 border-slate-100">
                     <div>

@@ -30,6 +30,7 @@ import {
   FiEye,
   FiTag,
   FiSearch,
+  FiStar,
 } from "react-icons/fi";
 import { useToast } from "@/context/ToastContext";
 
@@ -142,6 +143,7 @@ interface Stats {
   outOfStockCount: number;
   totalCustomers: number;
   totalCoupons: number;
+  totalReviews: number;
 }
 
 type TabType =
@@ -170,6 +172,7 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [shippingSettings, setShippingSettings] = useState<ShippingSetting[]>(
     [],
   );
@@ -196,15 +199,21 @@ export default function AdminDashboard() {
     outOfStockCount: 0,
     totalCustomers: 0,
     totalCoupons: 0,
+    totalReviews: 0,
   });
 
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("analytics");
 
-  // حالات البحث والترقيم لتبويب الطلبات
+  // حالات البحث والترقيم للتبويبات المختلفة
   const [orderSearchQuery, setOrderSearchQuery] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState("ALL");
   const [orderCurrentPage, setOrderCurrentPage] = useState(1);
+  const [productCurrentPage, setProductCurrentPage] = useState(1);
+  const [categoryCurrentPage, setCategoryCurrentPage] = useState(1);
+  const [userCurrentPage, setUserCurrentPage] = useState(1);
+  const [couponCurrentPage, setCouponCurrentPage] = useState(1);
+  const [shippingCurrentPage, setShippingCurrentPage] = useState(1);
 
   // تصفية الطلبات بناءً على البحث وحالة الطلب
   const filteredOrders = orders.filter((order) => {
@@ -237,6 +246,95 @@ export default function AdminDashboard() {
     setOrderSearchQuery(e.target.value);
     setOrderCurrentPage(1);
   };
+
+  // حساب المبيعات الشهرية لآخر 6 أشهر
+  const getMonthlyRevenueData = () => {
+    const monthsData: { name: string; amount: number }[] = [];
+    const now = new Date();
+    
+    // أسماء الأشهر بالعربية
+    const arabicMonths = [
+      "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+      "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
+    ];
+
+    // لآخر 6 أشهر
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      monthsData.push({
+        name: arabicMonths[d.getMonth()],
+        amount: 0
+      });
+    }
+
+    // حساب المجموع لكل شهر
+    orders.forEach((order) => {
+      if (order.paymentStatus !== "PAID") return;
+      const orderDate = new Date(order.createdAt);
+      const orderYear = orderDate.getFullYear();
+      const orderMonth = orderDate.getMonth();
+
+      // التحقق من توافق الشهر والسنة مع الأشهر الستة الأخيرة
+      for (let i = 0; i < 6; i++) {
+        const targetDate = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+        if (
+          orderYear === targetDate.getFullYear() &&
+          orderMonth === targetDate.getMonth()
+        ) {
+          monthsData[i].amount += order.totalAmount;
+          break;
+        }
+      }
+    });
+
+    return monthsData;
+  };
+
+  const monthlySales = getMonthlyRevenueData();
+  const maxRevenue = Math.max(...monthlySales.map((m) => m.amount), 1000); // تجنب القسمة على صفر
+
+  // حساب نسبة توفر المخزون ديناميكياً
+  const stockAvailabilityRatio = products.length > 0 
+    ? Math.round(((products.length - stats.outOfStockCount) / products.length) * 100)
+    : 100;
+
+  // إعداد الترقيم للتبويبات المختلفة (Pagination Configurations)
+  const itemsPerPage = 8;
+
+  // 1. المنتجات
+  const totalProductPages = Math.ceil(products.length / itemsPerPage);
+  const currentProducts = products.slice(
+    (productCurrentPage - 1) * itemsPerPage,
+    productCurrentPage * itemsPerPage
+  );
+
+  // 2. الأقسام
+  const totalCategoryPages = Math.ceil(categories.length / itemsPerPage);
+  const currentCategories = categories.slice(
+    (categoryCurrentPage - 1) * itemsPerPage,
+    categoryCurrentPage * itemsPerPage
+  );
+
+  // 3. المستخدمين
+  const totalUserPages = Math.ceil(users.length / itemsPerPage);
+  const currentUsers = users.slice(
+    (userCurrentPage - 1) * itemsPerPage,
+    userCurrentPage * itemsPerPage
+  );
+
+  // 4. الكوبونات
+  const totalCouponPages = Math.ceil(coupons.length / itemsPerPage);
+  const currentCoupons = coupons.slice(
+    (couponCurrentPage - 1) * itemsPerPage,
+    couponCurrentPage * itemsPerPage
+  );
+
+  // 5. الشحن
+  const totalShippingPages = Math.ceil(shippingSettings.length / itemsPerPage);
+  const currentShipping = shippingSettings.slice(
+    (shippingCurrentPage - 1) * itemsPerPage,
+    shippingCurrentPage * itemsPerPage
+  );
 
   const handleStatusFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setOrderStatusFilter(e.target.value);
@@ -357,6 +455,7 @@ export default function AdminDashboard() {
       setOrders(data.orders || []);
       setUsers(data.users || []);
       setCoupons(data.coupons || []);
+      setReviews(data.reviews || []);
       setShippingSettings(data.shippingSettings || []);
 
       if (data.homepageContent) {
@@ -376,6 +475,7 @@ export default function AdminDashboard() {
           outOfStockCount: 0,
           totalCustomers: 0,
           totalCoupons: 0,
+          totalReviews: 0,
         },
       );
     } catch (e: any) {
@@ -1075,7 +1175,7 @@ export default function AdminDashboard() {
       <div className="container mx-auto px-4 lg:px-8 mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* الشريط الجانبي الفاخر (Tabs Navigation) */}
         <aside className="lg:col-span-3 space-y-4">
-          <div className="bg-white border border-slate-200 rounded-2xl p-3 space-y-1 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-2 lg:gap-1 scrollbar-none">
             {[
               {
                 id: "analytics",
@@ -1096,8 +1196,15 @@ export default function AdminDashboard() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as TabType)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all text-right cursor-pointer ${
+                  onClick={() => {
+                    setActiveTab(tab.id as TabType);
+                    if (tab.id === "products") setProductCurrentPage(1);
+                    if (tab.id === "categories") setCategoryCurrentPage(1);
+                    if (tab.id === "users") setUserCurrentPage(1);
+                    if (tab.id === "coupons") setCouponCurrentPage(1);
+                    if (tab.id === "shipping") setShippingCurrentPage(1);
+                  }}
+                  className={`flex-shrink-0 lg:flex-shrink w-auto lg:w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all text-right cursor-pointer ${
                     isActive
                       ? "bg-gradient-to-r from-[#0f1a3e] to-[#1e2d6e] text-white shadow-md shadow-[#0f1a3e]/20"
                       : "text-slate-600 hover:bg-slate-50 hover:text-[#0f1a3e] border border-transparent"
@@ -1153,7 +1260,7 @@ export default function AdminDashboard() {
           {activeTab === "analytics" && (
             <div className="space-y-8 animate-fadeIn">
               {/* شبكة الإحصائيات الفخمة المتقدمة */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/5 rounded-full blur-xl transition-all group-hover:scale-125"></div>
                   <div className="flex justify-between items-center relative z-10">
@@ -1165,7 +1272,7 @@ export default function AdminDashboard() {
                         {stats.totalRevenue.toLocaleString("ar-EG")} ج.م
                       </h3>
                       <p className="text-[9px] text-slate-450 mt-1">
-                        إجمالي الفواتير المدفوعة إلكترونياً
+                        إجمالي الفواتير المدفوعة
                       </p>
                     </div>
                     <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
@@ -1227,7 +1334,7 @@ export default function AdminDashboard() {
                         {stats.outOfStockCount} منتج
                       </h3>
                       <p className="text-[9px] text-slate-450 mt-1">
-                        إكسسوارات وصلت كميتها للصفر
+                        إكسسوارات كميتها صفر
                       </p>
                     </div>
                     <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100">
@@ -1235,246 +1342,110 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </div>
+
+                <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-500/5 rounded-full blur-xl transition-all group-hover:scale-125"></div>
+                  <div className="flex justify-between items-center relative z-10">
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                        كوبونات الخصم
+                      </span>
+                      <h3 className="text-2xl font-extrabold text-indigo-600 font-mono">
+                        {stats.totalCoupons} كوبون
+                      </h3>
+                      <p className="text-[9px] text-slate-450 mt-1">
+                        إجمالي العروض الفعالة
+                      </p>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
+                      <FiTag className="w-5 h-5" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-violet-500/5 rounded-full blur-xl transition-all group-hover:scale-125"></div>
+                  <div className="flex justify-between items-center relative z-10">
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">
+                        تقييمات المنتجات
+                      </span>
+                      <h3 className="text-2xl font-extrabold text-violet-600 font-mono">
+                        {stats.totalReviews} تقييم
+                      </h3>
+                      <p className="text-[9px] text-slate-450 mt-1">
+                        مراجعات وآراء العملاء
+                      </p>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center border border-violet-100">
+                      <FiStar className="w-5 h-5" />
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* تحليلات SVG الفخمة الساطعة */}
+              {/* تحليلات المبيعات الشهرية */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                 {/* الرسم البياني للتوزيع */}
-                <div className="md:col-span-8 bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs">
+                <div className="md:col-span-8 bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-xs flex flex-col justify-between">
                   <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                    <h4 className="text-sm font-bold text-slate-700">
-                      تحليل مبيعات وتوزيع المنتجات
-                    </h4>
-                    <span className="text-[10px] text-slate-400">
-                      مبني على قطاعات إكسسوارات الألومنيوم
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-700">
+                        تحليل المبيعات الشهرية (Paid)
+                      </h4>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        إجمالي الإيرادات الفعلية لآخر 6 أشهر
+                      </p>
+                    </div>
+                    <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full font-mono">
+                      المجموع: {monthlySales.reduce((sum, m) => sum + m.amount, 0).toLocaleString("ar-EG")} ج.م
                     </span>
                   </div>
 
-                  <div className="h-64 w-full flex items-center justify-center relative">
-                    <svg
-                      className="w-full h-full max-h-56"
-                      viewBox="0 0 500 220"
-                    >
-                      <line
-                        x1="40"
-                        y1="20"
-                        x2="480"
-                        y2="20"
-                        stroke="#f1f5f9"
-                        strokeDasharray="3"
-                      />
-                      <line
-                        x1="40"
-                        y1="70"
-                        x2="480"
-                        y2="70"
-                        stroke="#f1f5f9"
-                        strokeDasharray="3"
-                      />
-                      <line
-                        x1="40"
-                        y1="120"
-                        x2="480"
-                        y2="120"
-                        stroke="#f1f5f9"
-                        strokeDasharray="3"
-                      />
-                      <line
-                        x1="40"
-                        y1="170"
-                        x2="480"
-                        y2="170"
-                        stroke="#cbd5e1"
-                      />
+                  {/* منطقة الرسم البياني */}
+                  <div className="h-48 flex items-end justify-between gap-4 px-2 pt-6 relative border-b border-slate-200 pb-2">
+                    {/* شبكة خطوط الخلفية */}
+                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20 pb-8">
+                      <div className="border-t border-dashed border-slate-400 w-full"></div>
+                      <div className="border-t border-dashed border-slate-400 w-full"></div>
+                      <div className="border-t border-dashed border-slate-400 w-full"></div>
+                    </div>
 
-                      <text
-                        x="30"
-                        y="25"
-                        fill="#94a3b8"
-                        fontSize="9"
-                        textAnchor="end"
-                      >
-                        100
-                      </text>
-                      <text
-                        x="30"
-                        y="75"
-                        fill="#94a3b8"
-                        fontSize="9"
-                        textAnchor="end"
-                      >
-                        50
-                      </text>
-                      <text
-                        x="30"
-                        y="125"
-                        fill="#94a3b8"
-                        fontSize="9"
-                        textAnchor="end"
-                      >
-                        10
-                      </text>
-                      <text
-                        x="30"
-                        y="175"
-                        fill="#94a3b8"
-                        fontSize="9"
-                        textAnchor="end"
-                      >
-                        0
-                      </text>
+                    {monthlySales.map((month, idx) => {
+                      const percent = (month.amount / maxRevenue) * 100;
+                      return (
+                        <div key={idx} className="flex-1 flex flex-col items-center group relative z-10">
+                          {/* بالون القيمة عند التحويم */}
+                          <div className="absolute -top-10 scale-0 group-hover:scale-100 transition-transform bg-slate-800 text-white text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow-lg pointer-events-none after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-slate-800 whitespace-nowrap">
+                            {month.amount.toLocaleString("ar-EG")} ج.م
+                          </div>
 
-                      {/* مقابض */}
-                      <g className="group cursor-pointer">
-                        <rect
-                          x="80"
-                          y="50"
-                          width="30"
-                          height="120"
-                          rx="4"
-                          fill="url(#metalic-gradient-primary)"
-                          className="transition-all hover:opacity-90"
-                        />
-                        <text
-                          x="95"
-                          y="40"
-                          fill="#3b5d81"
-                          fontSize="9"
-                          fontWeight="bold"
-                          textAnchor="middle"
-                        >
-                          75%
-                        </text>
-                        <text
-                          x="95"
-                          y="195"
-                          fill="#64748b"
-                          fontSize="8"
-                          textAnchor="middle"
-                        >
-                          مقابض
-                        </text>
-                      </g>
+                          {/* العمود الملئ */}
+                          <div className="w-full max-w-[28px] sm:max-w-[36px] bg-slate-50 rounded-t-md overflow-hidden flex items-end h-32 transition-all hover:bg-slate-100 cursor-pointer">
+                            <div
+                              style={{ height: `${percent}%` }}
+                              className={`w-full rounded-t-md transition-all duration-700 ease-out origin-bottom
+                                ${
+                                  idx % 2 === 0
+                                    ? "bg-gradient-to-t from-primary-600 to-primary-400"
+                                    : "bg-gradient-to-t from-amber-600 to-amber-400"
+                                }
+                              `}
+                            ></div>
+                          </div>
 
-                      {/* مفصلات */}
-                      <g className="group cursor-pointer">
-                        <rect
-                          x="180"
-                          y="90"
-                          width="30"
-                          height="80"
-                          rx="4"
-                          fill="url(#metalic-gradient-gold)"
-                          className="transition-all hover:opacity-90"
-                        />
-                        <text
-                          x="195"
-                          y="80"
-                          fill="#c59b27"
-                          fontSize="9"
-                          fontWeight="bold"
-                          textAnchor="middle"
-                        >
-                          50%
-                        </text>
-                        <text
-                          x="195"
-                          y="195"
-                          fill="#64748b"
-                          fontSize="8"
-                          textAnchor="middle"
-                        >
-                          مفصلات
-                        </text>
-                      </g>
+                          {/* تفاصيل القيمة بالأسفل */}
+                          <span className="text-[8px] sm:text-[9px] font-bold text-slate-700 font-mono mt-1.5 block whitespace-nowrap">
+                            {month.amount > 0 ? `${month.amount.toLocaleString("ar-EG")} ج.م` : "-"}
+                          </span>
 
-                      {/* أقفال */}
-                      <g className="group cursor-pointer">
-                        <rect
-                          x="280"
-                          y="130"
-                          width="30"
-                          height="40"
-                          rx="4"
-                          fill="url(#metalic-gradient-primary)"
-                          className="transition-all hover:opacity-90"
-                        />
-                        <text
-                          x="295"
-                          y="120"
-                          fill="#3b5d81"
-                          fontSize="9"
-                          fontWeight="bold"
-                          textAnchor="middle"
-                        >
-                          25%
-                        </text>
-                        <text
-                          x="295"
-                          y="195"
-                          fill="#64748b"
-                          fontSize="8"
-                          textAnchor="middle"
-                        >
-                          أقفال
-                        </text>
-                      </g>
-
-                      {/* عجل جرار */}
-                      <g className="group cursor-pointer">
-                        <rect
-                          x="380"
-                          y="70"
-                          width="30"
-                          height="100"
-                          rx="4"
-                          fill="url(#metalic-gradient-gold)"
-                          className="transition-all hover:opacity-90"
-                        />
-                        <text
-                          x="395"
-                          y="60"
-                          fill="#c59b27"
-                          fontSize="9"
-                          fontWeight="bold"
-                          textAnchor="middle"
-                        >
-                          60%
-                        </text>
-                        <text
-                          x="395"
-                          y="195"
-                          fill="#64748b"
-                          fontSize="8"
-                          textAnchor="middle"
-                        >
-                          عجل جرار
-                        </text>
-                      </g>
-
-                      <defs>
-                        <linearGradient
-                          id="metalic-gradient-primary"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop offset="0%" stopColor="#60a5fa" />
-                          <stop offset="100%" stopColor="#3b82f6" />
-                        </linearGradient>
-                        <linearGradient
-                          id="metalic-gradient-gold"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop offset="0%" stopColor="#f59e0b" />
-                          <stop offset="100%" stopColor="#d97706" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
+                          {/* اسم الشهر */}
+                          <span className="text-[10px] font-bold text-slate-450 mt-1">
+                            {month.name}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1507,14 +1478,14 @@ export default function AdminDashboard() {
                           stroke="#3b82f6"
                           strokeWidth="8"
                           strokeDasharray="251.2"
-                          strokeDashoffset={251.2 * 0.15}
+                          strokeDashoffset={251.2 * (1 - stockAvailabilityRatio / 100)}
                           strokeLinecap="round"
                           className="transition-all duration-1000"
                         />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                        <span className="text-2xl font-extrabold text-slate-850">
-                          85%
+                        <span className="text-2xl font-extrabold text-slate-850 font-mono">
+                          {stockAvailabilityRatio}%
                         </span>
                         <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block">
                           نسبة التوفر
@@ -1582,7 +1553,7 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {products.map((prod) => {
+                        {currentProducts.map((prod) => {
                           const activePrice =
                             prod.discountPrice !== null &&
                             prod.discountPrice !== undefined
@@ -1648,7 +1619,9 @@ export default function AdminDashboard() {
                                 >
                                   {prod.stock <= 0
                                     ? "نفذت"
-                                    : `${prod.stock} قطعة`}
+                                    : prod.stock <= 5
+                                      ? `مخزون منخفض (${prod.stock} قطع)`
+                                      : `${prod.stock} قطعة`}
                                 </span>
                               </td>
                               <td className="p-4">
@@ -1684,6 +1657,52 @@ export default function AdminDashboard() {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* الترقيم (Pagination) */}
+                  {totalProductPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 py-4 border-t border-slate-100" dir="ltr">
+                      <button
+                        onClick={() => setProductCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={productCurrentPage === 1}
+                        className="p-2 border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors cursor-pointer text-slate-600 flex items-center justify-center bg-white"
+                        title="الصفحة السابقة"
+                      >
+                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                      </button>
+
+                      <div className="flex gap-1.5">
+                        {Array.from({ length: totalProductPages }, (_, index) => {
+                          const pageNum = index + 1;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setProductCurrentPage(pageNum)}
+                              className={`w-9 h-9 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                                productCurrentPage === pageNum
+                                  ? "bg-[#0f1a3e] text-white shadow-md shadow-[#0f1a3e]/10"
+                                  : "border border-slate-200 text-slate-655 hover:bg-slate-50 bg-white"
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        onClick={() => setProductCurrentPage((prev) => Math.min(prev + 1, totalProductPages))}
+                        disabled={productCurrentPage === totalProductPages}
+                        className="p-2 border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors cursor-pointer text-slate-600 flex items-center justify-center bg-white"
+                        title="الصفحة التالية"
+                      >
+                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1723,62 +1742,111 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {categories.map((cat, idx) => (
-                          <tr
-                            key={cat.id}
-                            className="hover:bg-slate-50/50 transition-colors"
-                          >
-                            <td className="p-4 font-mono font-bold text-slate-400">
-                              {cat.orderIndex}
-                            </td>
-                            <td className="p-4 font-bold text-slate-850">
-                              {cat.name}
-                            </td>
-                            <td className="p-4 font-mono text-slate-450">
-                              {cat.slug}
-                            </td>
-                            <td className="p-4 text-slate-500 line-clamp-1 max-w-[200px] mt-2 block border-0">
-                              {cat.description || "لا يوجد وصف"}
-                            </td>
-                            <td className="p-4">
-                              <div className="flex items-center justify-center gap-2">
-                                <button
-                                  disabled={idx === 0}
-                                  onClick={() =>
-                                    handleMoveCategoryOrder(cat, "up")
-                                  }
-                                  className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-sm text-slate-600 rounded disabled:opacity-30"
-                                >
-                                  ▲
-                                </button>
-                                <button
-                                  disabled={idx === categories.length - 1}
-                                  onClick={() =>
-                                    handleMoveCategoryOrder(cat, "down")
-                                  }
-                                  className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-sm text-slate-600 rounded disabled:opacity-30"
-                                >
-                                  ▼
-                                </button>
-                                <button
-                                  onClick={() => handleOpenEditCategory(cat)}
-                                  className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 transition-all cursor-pointer bg-white"
-                                >
-                                  <FiEdit3 className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteCategory(cat.id)}
-                                  className="p-1.5 rounded-lg border border-rose-250 text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all cursor-pointer bg-white"
-                                >
-                                  <FiTrash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                        {currentCategories.map((cat) => {
+                          const globalIdx = categories.findIndex((c) => c.id === cat.id);
+                          return (
+                            <tr
+                              key={cat.id}
+                              className="hover:bg-slate-50/50 transition-colors"
+                            >
+                              <td className="p-4 font-mono font-bold text-slate-400">
+                                {cat.orderIndex}
+                              </td>
+                              <td className="p-4 font-bold text-slate-850">
+                                {cat.name}
+                              </td>
+                              <td className="p-4 font-mono text-slate-450">
+                                {cat.slug}
+                              </td>
+                              <td className="p-4 text-slate-500 line-clamp-1 max-w-[200px] mt-2 block border-0">
+                                {cat.description || "لا يوجد وصف"}
+                              </td>
+                              <td className="p-4">
+                                <div className="flex items-center justify-center gap-2">
+                                  <button
+                                    disabled={globalIdx === 0}
+                                    onClick={() =>
+                                      handleMoveCategoryOrder(cat, "up")
+                                    }
+                                    className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-sm text-slate-600 rounded disabled:opacity-30"
+                                  >
+                                    ▲
+                                  </button>
+                                  <button
+                                    disabled={globalIdx === categories.length - 1}
+                                    onClick={() =>
+                                      handleMoveCategoryOrder(cat, "down")
+                                    }
+                                    className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-sm text-slate-600 rounded disabled:opacity-30"
+                                  >
+                                    ▼
+                                  </button>
+                                  <button
+                                    onClick={() => handleOpenEditCategory(cat)}
+                                    className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 transition-all cursor-pointer bg-white"
+                                  >
+                                    <FiEdit3 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteCategory(cat.id)}
+                                    className="p-1.5 rounded-lg border border-rose-250 text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-all cursor-pointer bg-white"
+                                  >
+                                    <FiTrash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
+
+                  {/* الترقيم (Pagination) */}
+                  {totalCategoryPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 py-4 border-t border-slate-100" dir="ltr">
+                      <button
+                        onClick={() => setCategoryCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={categoryCurrentPage === 1}
+                        className="p-2 border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors cursor-pointer text-slate-600 flex items-center justify-center bg-white"
+                        title="الصفحة السابقة"
+                      >
+                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                      </button>
+
+                      <div className="flex gap-1.5">
+                        {Array.from({ length: totalCategoryPages }, (_, index) => {
+                          const pageNum = index + 1;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setCategoryCurrentPage(pageNum)}
+                              className={`w-9 h-9 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                                categoryCurrentPage === pageNum
+                                  ? "bg-[#0f1a3e] text-white shadow-md shadow-[#0f1a3e]/10"
+                                  : "border border-slate-200 text-slate-655 hover:bg-slate-50 bg-white"
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        onClick={() => setCategoryCurrentPage((prev) => Math.min(prev + 1, totalCategoryPages))}
+                        disabled={categoryCurrentPage === totalCategoryPages}
+                        className="p-2 border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors cursor-pointer text-slate-600 flex items-center justify-center bg-white"
+                        title="الصفحة التالية"
+                      >
+                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -2083,7 +2151,7 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {users.map((u) => (
+                        {currentUsers.map((u) => (
                           <tr
                             key={u.id}
                             className="hover:bg-slate-50/50 transition-colors"
@@ -2110,6 +2178,52 @@ export default function AdminDashboard() {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* الترقيم (Pagination) */}
+                  {totalUserPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 py-4 border-t border-slate-100" dir="ltr">
+                      <button
+                        onClick={() => setUserCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={userCurrentPage === 1}
+                        className="p-2 border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors cursor-pointer text-slate-600 flex items-center justify-center bg-white"
+                        title="الصفحة السابقة"
+                      >
+                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                      </button>
+
+                      <div className="flex gap-1.5">
+                        {Array.from({ length: totalUserPages }, (_, index) => {
+                          const pageNum = index + 1;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setUserCurrentPage(pageNum)}
+                              className={`w-9 h-9 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                                userCurrentPage === pageNum
+                                  ? "bg-[#0f1a3e] text-white shadow-md shadow-[#0f1a3e]/10"
+                                  : "border border-slate-200 text-slate-655 hover:bg-slate-550 hover:bg-slate-50 bg-white"
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        onClick={() => setUserCurrentPage((prev) => Math.min(prev + 1, totalUserPages))}
+                        disabled={userCurrentPage === totalUserPages}
+                        className="p-2 border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors cursor-pointer text-slate-600 flex items-center justify-center bg-white"
+                        title="الصفحة التالية"
+                      >
+                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -2150,7 +2264,7 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {coupons.map((coupon) => (
+                        {currentCoupons.map((coupon) => (
                           <tr
                             key={coupon.id}
                             className="hover:bg-slate-50/50 transition-colors"
@@ -2213,6 +2327,52 @@ export default function AdminDashboard() {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* الترقيم (Pagination) */}
+                  {totalCouponPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 py-4 border-t border-slate-100" dir="ltr">
+                      <button
+                        onClick={() => setCouponCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={couponCurrentPage === 1}
+                        className="p-2 border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors cursor-pointer text-slate-600 flex items-center justify-center bg-white"
+                        title="الصفحة السابقة"
+                      >
+                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                      </button>
+
+                      <div className="flex gap-1.5">
+                        {Array.from({ length: totalCouponPages }, (_, index) => {
+                          const pageNum = index + 1;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setCouponCurrentPage(pageNum)}
+                              className={`w-9 h-9 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                                couponCurrentPage === pageNum
+                                  ? "bg-[#0f1a3e] text-white shadow-md shadow-[#0f1a3e]/10"
+                                  : "border border-slate-200 text-slate-655 hover:bg-slate-50 bg-white"
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        onClick={() => setCouponCurrentPage((prev) => Math.min(prev + 1, totalCouponPages))}
+                        disabled={couponCurrentPage === totalCouponPages}
+                        className="p-2 border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors cursor-pointer text-slate-600 flex items-center justify-center bg-white"
+                        title="الصفحة التالية"
+                      >
+                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -2252,7 +2412,7 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {shippingSettings.map((ship) => (
+                        {currentShipping.map((ship) => (
                           <tr
                             key={ship.id}
                             className="hover:bg-slate-50/50 transition-colors"
@@ -2299,6 +2459,52 @@ export default function AdminDashboard() {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* الترقيم (Pagination) */}
+                  {totalShippingPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 py-4 border-t border-slate-100" dir="ltr">
+                      <button
+                        onClick={() => setShippingCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={shippingCurrentPage === 1}
+                        className="p-2 border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors cursor-pointer text-slate-600 flex items-center justify-center bg-white"
+                        title="الصفحة السابقة"
+                      >
+                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                      </button>
+
+                      <div className="flex gap-1.5">
+                        {Array.from({ length: totalShippingPages }, (_, index) => {
+                          const pageNum = index + 1;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setShippingCurrentPage(pageNum)}
+                              className={`w-9 h-9 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                                shippingCurrentPage === pageNum
+                                  ? "bg-[#0f1a3e] text-white shadow-md shadow-[#0f1a3e]/10"
+                                  : "border border-slate-200 text-slate-655 hover:bg-slate-50 bg-white"
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        onClick={() => setShippingCurrentPage((prev) => Math.min(prev + 1, totalShippingPages))}
+                        disabled={shippingCurrentPage === totalShippingPages}
+                        className="p-2 border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors cursor-pointer text-slate-600 flex items-center justify-center bg-white"
+                        title="الصفحة التالية"
+                      >
+                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

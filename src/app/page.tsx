@@ -8,6 +8,21 @@ import ProductCard from "@/components/ProductCard";
 export const revalidate = 0;
 
 export default async function HomePage() {
+  const homepageContent = await prisma.homepageContent.findFirst();
+
+  const heroTitle = homepageContent?.heroTitle || "اكتشف أرقى — إكسسوارات الألومنيوم";
+  let titleMain = heroTitle;
+  let titleAccent = "";
+  if (heroTitle.includes("—")) {
+    const parts = heroTitle.split("—");
+    titleMain = parts[0].trim();
+    titleAccent = parts.slice(1).join("—").trim();
+  } else if (heroTitle.includes(" - ")) {
+    const parts = heroTitle.split(" - ");
+    titleMain = parts[0].trim();
+    titleAccent = parts.slice(1).join(" - ").trim();
+  }
+
   const featuredProducts = await prisma.product.findMany({
     where: { isActive: true },
     take: 8,
@@ -61,7 +76,7 @@ export default async function HomePage() {
         {/* Real hero background */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&q=80&w=1600')" }}
+          style={{ backgroundImage: `url('${homepageContent?.heroImage || "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&q=80&w=1600"}')` }}
         />
         <div className="absolute inset-0 bg-gradient-to-br from-[#0f1a3e]/92 via-[#0f1a3e]/80 to-[#1e2d6e]/85" />
         {/* Decorative circles */}
@@ -78,22 +93,24 @@ export default async function HomePage() {
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">
-              اكتشف أرقى
-              <span className="block mt-1 bg-gradient-to-l from-[#d4a017] to-[#f0c84a] bg-clip-text text-transparent">
-                إكسسوارات الألومنيوم
-              </span>
+              {titleMain}
+              {titleAccent && (
+                <span className="block mt-1 bg-gradient-to-l from-[#d4a017] to-[#f0c84a] bg-clip-text text-transparent">
+                  {titleAccent}
+                </span>
+              )}
             </h1>
 
             <p className="text-base sm:text-lg text-blue-100/80 leading-relaxed max-w-2xl mx-auto font-medium">
-              مقابض، مفصلات، أقفال وعجل جرار بجودة فائقة — لكل أبواب وشبابيك الألومنيوم في مصر. توصيل لجميع المحافظات في 24-48 ساعة.
+              {homepageContent?.heroSubtitle || "مقابض، مفصلات، أقفال وعجل جرار بجودة فائقة — لكل أبواب وشبابيك الألومنيوم في مصر. توصيل لجميع المحافظات في 24-48 ساعة."}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
-                href="/shop"
+                href={homepageContent?.ctaLink || "/shop"}
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-[#d4a017] to-[#f0c84a] text-[#0f1a3e] font-extrabold text-sm shadow-2xl shadow-[#d4a017]/30 hover:shadow-[#d4a017]/50 hover:-translate-y-0.5 transition-all duration-300"
               >
-                <span>تسوق الآن</span>
+                <span>{homepageContent?.ctaText || "تسوق الآن"}</span>
                 <FiArrowLeft className="w-4 h-4" />
               </Link>
               <Link

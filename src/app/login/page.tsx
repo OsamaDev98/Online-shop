@@ -130,7 +130,7 @@ function LoginContent() {
                   <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
                     البريد الإلكتروني
                   </label>
-                  <div className="relative">
+                  <div className="relative mt-2">
                     <FiMail className="absolute inset-y-0 right-3 my-auto w-4 h-4 text-slate-400" />
                     <input
                       type="email"
@@ -148,7 +148,7 @@ function LoginContent() {
                   <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
                     كلمة المرور
                   </label>
-                  <div className="relative">
+                  <div className="relative mt-2">
                     <FiLock className="absolute inset-y-0 right-3 my-auto w-4 h-4 text-slate-400" />
                     <input
                       type="password"
@@ -182,7 +182,7 @@ function LoginContent() {
                   <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
                     الاسم الكامل *
                   </label>
-                  <div className="relative">
+                  <div className="relative mt-2">
                     <FiUser className="absolute inset-y-0 right-3 my-auto w-4 h-4 text-slate-400" />
                     <input
                       type="text"
@@ -199,7 +199,7 @@ function LoginContent() {
                   <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
                     البريد الإلكتروني *
                   </label>
-                  <div className="relative">
+                  <div className="relative mt-2">
                     <FiMail className="absolute inset-y-0 right-3 my-auto w-4 h-4 text-slate-400" />
                     <input
                       type="email"
@@ -217,7 +217,7 @@ function LoginContent() {
                   <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
                     رقم الهاتف *
                   </label>
-                  <div className="relative">
+                  <div className="relative mt-2">
                     <FiPhone className="absolute inset-y-0 right-3 my-auto w-4 h-4 text-slate-400" />
                     <input
                       type="tel"
@@ -236,7 +236,7 @@ function LoginContent() {
                     <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
                       كلمة المرور *
                     </label>
-                    <div className="relative">
+                    <div className="relative mt-2">
                       <FiLock className="absolute inset-y-0 right-3 my-auto w-4 h-4 text-slate-400" />
                       <input
                         type="password"
@@ -253,7 +253,7 @@ function LoginContent() {
                     <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
                       التأكيد *
                     </label>
-                    <div className="relative">
+                    <div className="relative mt-2">
                       <FiLock className="absolute inset-y-0 right-3 my-auto w-4 h-4 text-slate-400" />
                       <input
                         type="password"
