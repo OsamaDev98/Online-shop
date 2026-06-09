@@ -1,7 +1,18 @@
 import Link from "next/link";
 import { FiPhone, FiMail, FiMapPin, FiShield, FiGlobe, FiMessageCircle, FiShare2 } from "react-icons/fi";
 
-export default function Footer() {
+interface FooterProps {
+  siteSetting?: {
+    siteName: string;
+    logo?: string | null;
+    contactPhone: string;
+    contactEmail: string;
+    whatsappNumber: string;
+    facebookLink?: string | null;
+  } | null;
+}
+
+export default function Footer({ siteSetting }: FooterProps) {
   const year = new Date().getFullYear();
 
   return (
@@ -22,7 +33,7 @@ export default function Footer() {
                 className="w-9 h-9 object-contain transition-transform duration-300 group-hover:scale-105"
               />
               <div>
-                <span className="block text-white font-extrabold text-base leading-tight">ألومنيوم إكسبرت</span>
+                <span className="block text-white font-extrabold text-base leading-tight">{siteSetting?.siteName || "ألومنيوم إكسبرت"}</span>
                 <span className="block text-[10px] text-[#d4a017] font-semibold">Aluminum Expert</span>
               </div>
             </Link>
@@ -35,20 +46,26 @@ export default function Footer() {
             </div>
             {/* Social icons */}
             <div className="flex items-center gap-3 pt-1">
-              {[
-                { icon: FiGlobe, label: "Facebook" },
-                { icon: FiMessageCircle, label: "WhatsApp" },
-                { icon: FiShare2, label: "Twitter" },
-              ].map(({ icon: Icon, label }) => (
+              {siteSetting?.facebookLink && (
                 <a
-                  key={label}
-                  href="#"
-                  aria-label={label}
+                  href={siteSetting.facebookLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Facebook"
                   className="w-8 h-8 rounded-lg bg-white/5 hover:bg-[#d4a017]/10 border border-white/10 hover:border-[#d4a017]/30 flex items-center justify-center text-slate-500 hover:text-[#d4a017] transition-all"
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <FiGlobe className="w-3.5 h-3.5" />
                 </a>
-              ))}
+              )}
+              <a
+                href={`https://wa.me/${(siteSetting?.whatsappNumber || "+201012345678").replace(/[^0-9]/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp"
+                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-[#d4a017]/10 border border-white/10 hover:border-[#d4a017]/30 flex items-center justify-center text-slate-500 hover:text-[#d4a017] transition-all"
+              >
+                <FiMessageCircle className="w-3.5 h-3.5" />
+              </a>
             </div>
           </div>
 
@@ -110,19 +127,19 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               <li>
-                <a href="tel:+201001234567" className="flex items-start gap-3 group">
+                <a href={`tel:${siteSetting?.contactPhone || "+201001234567"}`} className="flex items-start gap-3 group">
                   <div className="w-7 h-7 rounded-lg bg-white/5 group-hover:bg-[#d4a017]/10 flex items-center justify-center flex-shrink-0 border border-white/5 group-hover:border-[#d4a017]/20 transition-all mt-0.5">
                     <FiPhone className="w-3 h-3 text-[#d4a017]" />
                   </div>
-                  <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-300 transition-colors" dir="ltr">+20 100 123 4567</span>
+                  <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-300 transition-colors" dir="ltr">{siteSetting?.contactPhone || "+20 100 123 4567"}</span>
                 </a>
               </li>
               <li>
-                <a href="mailto:support@aluminum-expert.com" className="flex items-start gap-3 group">
+                <a href={`mailto:${siteSetting?.contactEmail || "support@aluminum-expert.com"}`} className="flex items-start gap-3 group">
                   <div className="w-7 h-7 rounded-lg bg-white/5 group-hover:bg-[#d4a017]/10 flex items-center justify-center flex-shrink-0 border border-white/5 group-hover:border-[#d4a017]/20 transition-all mt-0.5">
                     <FiMail className="w-3 h-3 text-[#d4a017]" />
                   </div>
-                  <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-300 transition-colors break-all">support@aluminum-expert.com</span>
+                  <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-300 transition-colors break-all">{siteSetting?.contactEmail || "support@aluminum-expert.com"}</span>
                 </a>
               </li>
               <li className="flex items-start gap-3">
@@ -141,7 +158,7 @@ export default function Footer() {
       <div className="border-t border-white/5">
         <div className="container mx-auto px-4 py-5 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-slate-600 font-medium">
-            © {year} ألومنيوم إكسبرت. جميع الحقوق محفوظة.
+            © {year} {siteSetting?.siteName || "ألومنيوم إكسبرت"}. جميع الحقوق محفوظة.
           </p>
           {/* Payment methods */}
           <div className="flex flex-wrap items-center gap-2">

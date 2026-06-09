@@ -8,7 +8,18 @@ import { HiSparkles } from "react-icons/hi";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 
-export default function Navbar() {
+interface NavbarProps {
+  siteSetting?: {
+    siteName: string;
+    logo?: string | null;
+    contactPhone: string;
+    contactEmail: string;
+    whatsappNumber: string;
+    facebookLink?: string | null;
+  } | null;
+}
+
+export default function Navbar({ siteSetting }: NavbarProps) {
   const pathname = usePathname();
   const { cartItems, cartCount, cartTotal, updateQuantity, removeFromCart } = useCart();
   const { user, logout, isAuthenticated } = useAuth();
@@ -44,10 +55,10 @@ export default function Navbar() {
             </span>
           </div>
           <a
-            href="tel:+201012345678"
+            href={`tel:${siteSetting?.contactPhone || "+201012345678"}`}
             className="flex items-center gap-1.5 text-yellow-300 hover:text-yellow-200 font-bold transition-colors"
           >
-            📞 +20 10 1234 5678
+            📞 {siteSetting?.contactPhone || "+20 10 1234 5678"}
           </a>
         </div>
       </div>
@@ -72,7 +83,17 @@ export default function Navbar() {
                   className="w-8 h-8 object-contain transition-transform duration-300 group-hover:scale-105"
                 />
                 <span className="text-lg font-black tracking-tight text-[#0f1a3e] group-hover:text-[#3238a3] transition-colors">
-                  ألومنيوم <span className="text-gold-gradient bg-gradient-to-r from-[#d4a017] to-[#f0c84a] bg-clip-text text-transparent">إكسبرت</span>
+                  {(() => {
+                    const siteName = siteSetting?.siteName || "ألومنيوم إكسبرت";
+                    const parts = siteName.split(" ");
+                    const first = parts[0];
+                    const rest = parts.slice(1).join(" ");
+                    return (
+                      <>
+                        {first} {rest && <span className="text-gold-gradient bg-gradient-to-r from-[#d4a017] to-[#f0c84a] bg-clip-text text-transparent">{rest}</span>}
+                      </>
+                    );
+                  })()}
                 </span>
               </Link>
 

@@ -89,7 +89,8 @@ export async function POST(request: Request) {
         await prisma.order.update({
           where: { id: order.id },
           data: {
-            status: "PAID",
+            paymentStatus: "PAID",
+            status: "UNDER_REVIEW", // الدفع نجح، والطلب قيد المراجعة الفنية للمقاسات
             paymentId: String(transaction.id) // حفظ معرف العملية المالية
           }
         });

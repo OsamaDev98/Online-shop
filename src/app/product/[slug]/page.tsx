@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import ProductImageGallery from "@/components/ProductImageGallery";
 import ProductActionPanel from "@/components/ProductActionPanel";
 import ProductCard from "@/components/ProductCard";
+import ReviewForm from "@/components/ReviewForm";
 
 export const revalidate = 0;
 
@@ -20,6 +21,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
     include: {
       category: {
         select: { name: true, slug: true }
+      },
+      reviews: {
+        orderBy: { createdAt: "desc" }
       }
     }
   });
@@ -99,25 +103,38 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 {product.name}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-3 text-xs">
-                {product.sku && (
-                  <span className="text-slate-400 font-semibold bg-slate-100 px-2.5 py-1 rounded-lg">
-                    SKU: {product.sku}
-                  </span>
-                )}
-                {product.brand && (
-                  <span className="text-slate-400 font-semibold bg-slate-100 px-2.5 py-1 rounded-lg">
-                    الماركة: {product.brand}
-                  </span>
-                )}
-                {/* Stars */}
-                <div className="flex items-center gap-1">
-                  {[1,2,3,4,5].map(i => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-[#d4a017] text-[#d4a017]" />
-                  ))}
-                  <span className="text-slate-400 font-bold mr-1">(4.9)</span>
-                </div>
-              </div>
+              {(() => {
+                const totalReviews = product.reviews.length;
+                const avgRating = totalReviews > 0
+                  ? (product.reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews).toFixed(1)
+                  : "5.0";
+                return (
+                  <div className="flex flex-wrap items-center gap-3 text-xs">
+                    {product.sku && (
+                      <span className="text-slate-400 font-semibold bg-slate-100 px-2.5 py-1 rounded-lg">
+                        SKU: {product.sku}
+                      </span>
+                    )}
+                    {product.brand && (
+                      <span className="text-slate-400 font-semibold bg-slate-100 px-2.5 py-1 rounded-lg">
+                        الماركة: {product.brand}
+                      </span>
+                    )}
+                    {/* Stars */}
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map(i => {
+                        const val = Number(avgRating);
+                        const isFilled = i <= Math.round(val);
+                        return (
+                          <Star key={i} className={`w-3.5 h-3.5 ${isFilled ? "fill-[#d4a017] text-[#d4a017]" : "text-slate-300"}`} />
+                        );
+                      })}
+                      <span className="text-slate-400 font-bold mr-1">({avgRating})</span>
+                      <span className="text-[10px] text-slate-400 font-medium mr-1">• {totalReviews} تقييم</span>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             <p className="text-sm text-slate-600 leading-relaxed border-r-4 border-[#d4a017] pr-4 bg-amber-50/50 py-3 rounded-l-xl">
@@ -156,31 +173,44 @@ export default async function ProductDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Reviews */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 border-b border-slate-200 pb-4">
-            <Star className="w-5 h-5 fill-[#d4a017] text-[#d4a017]" />
-            <h3 className="text-xl font-extrabold text-slate-900">آراء العملاء</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {[
-              { name: "م. كريم محمود", rating: 5, date: "قبل 3 أيام", text: "مقبض فخم جداً وملمسه ناعم. استعملته في أبواب ألومنيوم ثقيلة وجاء متناسقاً ومثبتاً بإحكام." },
-              { name: "أبو أحمد للألوميتال", rating: 5, date: "قبل أسبوع", text: "كالون ذو أمان ممتاز والسلندر نحاسي ثقيل جداً. الأسعار هنا أفضل من المحلات المحلية." },
-              { name: "م. شريف طنطاوي", rating: 4, date: "قبل أسبوعين", text: "الخامات إيطالية ممتازة والشحن للإسكندرية استغرق يومين فقط. التغليف رائع." },
-            ].map((rev, idx) => (
-              <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3 shadow-sm hover:shadow-md hover:border-primary-200 transition-all">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-extrabold text-[#0f1a3e]">{rev.name}</span>
-                  <span className="text-[10px] text-slate-400 font-semibold">{rev.date}</span>
-                </div>
-                <div className="flex gap-0.5">
-                  {Array.from({ length: rev.rating }).map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-[#d4a017] text-[#d4a017]" />
-                  ))}
-                </div>
-                <p className="text-xs leading-relaxed text-slate-500">"{rev.text}"</p>
+        {/* Reviews Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 border-t border-slate-200 pt-10">
+          {/* Reviews List */}
+          <div className="lg:col-span-8 space-y-6">
+            <div className="flex items-center gap-2 border-b border-slate-200 pb-4">
+              <Star className="w-5 h-5 fill-[#d4a017] text-[#d4a017]" />
+              <h3 className="text-xl font-extrabold text-slate-900">آراء وتقييمات العملاء ({product.reviews.length})</h3>
+            </div>
+            
+            {product.reviews.length === 0 ? (
+              <div className="bg-white rounded-3xl border border-slate-200 p-8 text-center text-slate-400 font-bold text-xs">
+                لا توجد تقييمات لهذا المنتج بعد. كن أول من يكتب تقييماً!
               </div>
-            ))}
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {product.reviews.map((rev) => (
+                  <div key={rev.id} className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3 shadow-sm hover:shadow-md hover:border-primary-200 transition-all">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-extrabold text-[#0f1a3e]">{rev.userName}</span>
+                      <span className="text-[10px] text-slate-400 font-semibold">
+                        {new Date(rev.createdAt).toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" })}
+                      </span>
+                    </div>
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((starIdx) => (
+                        <Star key={starIdx} className={`w-3.5 h-3.5 ${starIdx <= rev.rating ? "fill-[#d4a017] text-[#d4a017]" : "text-slate-200"}`} />
+                      ))}
+                    </div>
+                    <p className="text-xs leading-relaxed text-slate-500">"{rev.comment}"</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Review Form Column */}
+          <div className="lg:col-span-4">
+            <ReviewForm productId={product.id} />
           </div>
         </div>
 

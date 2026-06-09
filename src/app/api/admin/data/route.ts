@@ -51,6 +51,11 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" }
     });
 
+    // 5b. جلب التقييمات
+    const reviews = await prisma.review.findMany({
+      orderBy: { createdAt: "desc" }
+    });
+
     // 6. جلب إعدادات شحن المحافظات
     const shippingSettings = await prisma.shippingSetting.findMany({
       orderBy: { province: "asc" }
@@ -79,6 +84,7 @@ export async function GET(request: Request) {
       orders,
       users,
       coupons,
+      reviews,
       shippingSettings,
       homepageContent,
       siteSetting,
@@ -87,7 +93,8 @@ export async function GET(request: Request) {
         totalRevenue,
         outOfStockCount,
         totalCustomers,
-        totalCoupons: coupons.length
+        totalCoupons: coupons.length,
+        totalReviews: reviews.length
       }
     });
 
